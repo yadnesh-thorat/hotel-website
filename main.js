@@ -1,0 +1,51 @@
+//Select element function
+const selectElement = function (element) {
+    return document.querySelector(element);
+};
+
+let menuToggler = selectElement('.menutoggle');
+let body = selectElement('body');
+
+menuToggler.addEventListener('click', function () {
+    body.classList.toggle('open');
+});
+
+// Scroll reveal
+window.sr = ScrollReveal();
+
+sr.reveal('.animate-left', {
+    origin: 'left',
+    duration: 1000,
+    distance: '25rem',
+    delay: 300
+});
+
+sr.reveal('.animate-right', {
+    origin: 'right',
+    duration: 1000,
+    distance: '25rem',
+    delay: 600
+});
+
+sr.reveal('.animate-top', {
+    origin: 'top',
+    duration: 1000,
+    distance: '25rem',
+    delay: 600
+});
+
+sr.reveal('.animate-bottom', {
+    origin: 'bottom',
+    duration: 1000,
+    distance: '25rem',
+    delay: 600
+});
+// Function to display the popup
+function showPopup() {
+    document.getElementById("popup").style.display = "flex"; // Show popup
+}
+
+// Function to close the popup
+function closePopup() {
+    document.getElementById("popup").style.display = "none"; // Hide popup
+}

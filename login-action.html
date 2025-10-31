@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Action</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Simulated successful login -->
+    <div class="login-container">
+        <h2>Login Successful</h2>
+        <button onclick="showPopup()">login successful</button>
+    </div>
+
+    <!-- Popup Container -->
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <span class="close-btn" onclick="closePopup()">&times;</span>
+            <h3>Welcome to The Moon!</h3>
+            <p>You have successfully logged in.</p>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
