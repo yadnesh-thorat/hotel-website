@@ -200,7 +200,7 @@ app.put('/api/trips/:id', async (req, res) => {
 });
 
 // CATCH-ALL FOR REACT (Must be last)
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'API route not found' });
   }
