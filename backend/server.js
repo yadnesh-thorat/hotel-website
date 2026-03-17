@@ -83,6 +83,13 @@ pool.connect((err, client, release) => {
 });
 
 // --- Routes ---
+app.get('/', (req, res) => {
+  res.send('TripLog Backend is Running! Open the Frontend to manage your trips.');
+});
+
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'UP', message: 'Ready to receive trip data' });
+});
 
 // Login / Register (creates user if not exists)
 app.post('/api/login', async (req, res) => {
