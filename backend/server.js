@@ -200,7 +200,13 @@ app.put('/api/trips/:id', async (req, res) => {
 });
 
 // CATCH-ALL FOR REACT (Must be last)
-app.get('/:path*', (req, res) => {
+// Using app.use with a check to avoid routing parser issues in Express 5
+app.use((req, res) => {
+  // Only handle GET requests for navigation, everything else is a 404
+  if (req.method !== 'GET') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+
   if (req.path.startsWith('/api')) {
     return res.status(404).json({ error: 'API route not found' });
   }
