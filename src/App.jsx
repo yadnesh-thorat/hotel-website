@@ -12,7 +12,7 @@ function App() {
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'auth', 'trip'
   const [activeTripId, setActiveTripId] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+  const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
 
   useEffect(() => {
     const user = localStorage.getItem('tripLogUser');

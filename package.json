@@ -7,9 +7,11 @@
     "dev:frontend": "vite",
     "dev:backend": "node backend/server.js",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "build": "vite build",
+    "build": "vite build && cd backend && npm install",
+    "start": "node backend/server.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "install-all": "npm install && cd backend && npm install"
   },
   "dependencies": {
     "lucide-react": "^0.577.0",

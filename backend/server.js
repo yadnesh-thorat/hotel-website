@@ -14,6 +14,10 @@ app.use(express.json({ limit: '50mb' }));
 // Serve static uploads folder for photos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Serve static frontend files (Monolith support)
+const distPath = path.resolve(__dirname, '..', 'dist');
+app.use(express.static(distPath));
+
 // Ensure uploads directory exists
 if (!fs.existsSync(path.join(__dirname, 'uploads'))) {
   fs.mkdirSync(path.join(__dirname, 'uploads'));
@@ -83,10 +87,7 @@ pool.connect((err, client, release) => {
 });
 
 // --- Routes ---
-app.get('/', (req, res) => {
-  res.send('TripLog Backend is Running! Open the Frontend to manage your trips.');
-});
-
+// Health Check API
 app.get('/api/status', (req, res) => {
   res.json({ status: 'UP', message: 'Ready to receive trip data' });
 });
@@ -195,6 +196,26 @@ app.put('/api/trips/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   } finally {
     client.release();
+  }
+});
+
+// CATCH-ALL FOR REACT (Must be last)
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'API route not found' });
+  }
+  
+  const indexPath = path.join(distPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).send(`
+      <div style="font-family: sans-serif; text-align: center; padding: 2rem;">
+        <h1>Frontend Build Missing</h1>
+        <p>The <code>dist</code> folder was not found at: <code>${distPath}</code></p>
+        <p>Please ensure you have run <code>npm run build</code> before starting the server.</p>
+      </div>
+    `);
   }
 });
 
