@@ -10,6 +10,20 @@ export default function Dashboard({ trips, onAddTrip, onViewTrip }) {
   const [startDate, setStartDate] = useState('');
   const [description, setDescription] = useState('');
 
+  const [tripNumber, setTripNumber] = useState('');
+  const [originLat, setOriginLat] = useState('');
+  const [originLng, setOriginLng] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [destLat, setDestLat] = useState('');
+  const [destLng, setDestLng] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [mode, setMode] = useState('');
+  const [distance, setDistance] = useState('');
+  const [purpose, setPurpose] = useState('');
+  const [companions, setCompanions] = useState('');
+  const [frequency, setFrequency] = useState('');
+  const [cost, setCost] = useState('');
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (name && destination && startDate) {
@@ -19,6 +33,19 @@ export default function Dashboard({ trips, onAddTrip, onViewTrip }) {
         destination,
         startDate,
         description,
+        tripNumber,
+        originLat: parseFloat(originLat) || null,
+        originLng: parseFloat(originLng) || null,
+        startTime,
+        destLat: parseFloat(destLat) || null,
+        destLng: parseFloat(destLng) || null,
+        endTime,
+        mode,
+        distance: parseFloat(distance) || null,
+        purpose,
+        companions: parseInt(companions, 10) || 0,
+        frequency,
+        cost: parseFloat(cost) || null,
         expenses: [],
         photos: []
       });
@@ -26,6 +53,19 @@ export default function Dashboard({ trips, onAddTrip, onViewTrip }) {
       setDestination('');
       setStartDate('');
       setDescription('');
+      setTripNumber('');
+      setOriginLat('');
+      setOriginLng('');
+      setStartTime('');
+      setDestLat('');
+      setDestLng('');
+      setEndTime('');
+      setMode('');
+      setDistance('');
+      setPurpose('');
+      setCompanions('');
+      setFrequency('');
+      setCost('');
       setShowModal(false);
     }
   };
@@ -99,25 +139,87 @@ export default function Dashboard({ trips, onAddTrip, onViewTrip }) {
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} style={{ padding: '1.5rem' }}>
-              <div className="form-group">
-                <label className="form-label">Trip Name *</label>
-                <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Summer in Paris" required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Destination *</label>
-                <input type="text" className="form-control" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="e.g. Paris, France" required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Start Date *</label>
-                <input type="date" className="form-control" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Description (optional)</label>
-                <textarea className="form-control" rows="3" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's the plan?"></textarea>
+            <form onSubmit={handleSubmit} style={{ padding: '1.5rem', maxHeight: '70vh', overflowY: 'auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="form-label">Trip Name *</label>
+                  <input type="text" className="form-control" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Summer in Paris" required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Trip Number</label>
+                  <input type="text" className="form-control" value={tripNumber} onChange={(e) => setTripNumber(e.target.value)} placeholder="e.g. TR-001" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Destination Name *</label>
+                  <input type="text" className="form-control" value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="e.g. Paris, France" required />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Origin Lat</label>
+                  <input type="number" step="any" className="form-control" value={originLat} onChange={(e) => setOriginLat(e.target.value)} placeholder="e.g. 19.07" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Origin Lng</label>
+                  <input type="number" step="any" className="form-control" value={originLng} onChange={(e) => setOriginLng(e.target.value)} placeholder="e.g. 72.87" />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Destination Lat</label>
+                  <input type="number" step="any" className="form-control" value={destLat} onChange={(e) => setDestLat(e.target.value)} placeholder="e.g. 48.85" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Destination Lng</label>
+                  <input type="number" step="any" className="form-control" value={destLng} onChange={(e) => setDestLng(e.target.value)} placeholder="e.g. 2.35" />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Start Date *</label>
+                  <input type="date" className="form-control" value={startDate} onChange={(e) => setStartDate(e.target.value)} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Start Time</label>
+                  <input type="time" className="form-control" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">End Time</label>
+                  <input type="time" className="form-control" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Mode used</label>
+                  <input type="text" className="form-control" value={mode} onChange={(e) => setMode(e.target.value)} placeholder="e.g. Flight, Train" />
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Travel Distance (km/miles)</label>
+                  <input type="number" step="any" className="form-control" value={distance} onChange={(e) => setDistance(e.target.value)} placeholder="e.g. 500" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Number of Companions</label>
+                  <input type="number" className="form-control" value={companions} onChange={(e) => setCompanions(e.target.value)} placeholder="e.g. 2" />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Trip Purpose</label>
+                  <input type="text" className="form-control" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="e.g. Vacation, Business" />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Frequency</label>
+                  <input type="text" className="form-control" value={frequency} onChange={(e) => setFrequency(e.target.value)} placeholder="e.g. Annually" />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Cost Incurred</label>
+                  <input type="number" step="any" className="form-control" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="e.g. 50000" />
+                </div>
+
+                <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                  <label className="form-label">Description (optional)</label>
+                  <textarea className="form-control" rows="2" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's the plan?"></textarea>
+                </div>
               </div>
               
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                 <button type="button" className="btn btn-secondary w-full" onClick={() => setShowModal(false)}>Cancel</button>
                 <button type="submit" className="btn btn-primary w-full">Save Trip</button>
               </div>

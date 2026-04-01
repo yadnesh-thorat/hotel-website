@@ -1,16 +1,40 @@
-# React + Vite
+# 🗺️ TripLog: Travel Expense & Memory Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+TripLog is a comprehensive travel management system that integrates trip planning, real-time expense tracking, and gallery-based memory storage. It provides travelers with a single dashboard to manage their finances and memories seamlessly.
 
-Currently, two official plugins are available:
+## 🚀 Core Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **👤 User Profiles:** Secure username-based authentication to keep your trip logs private and organized.
+- **💰 Smart Expense Dashboard:** 
+  - **Categorization:** Track spending across Food, Transport, Hotel, Shopping, and more.
+  - **Auto-Calculation:** Real-time total cost updates in your local currency (₹).
+  - **Visual Analytics:** Breakdown of spending habits to help you stay within budget.
+- **📸 Trip Memory Vault:** Integrated photo gallery where your travel memories are mapped specifically to each trip.
+- **💾 Hybrid Storage:** Dual-layer data protection using a Cloud Database (PostgreSQL) and LocalStorage for offline resilience.
+- **⚡ Optimistic UI:** Experience a lightning-fast interface that updates immediately, ensuring a smooth experience even on slow networks.
+- **🛡️ Resiliency Layer:** Custom synchronization that prioritize local data safety if the server is temporarily unreachable.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend:** React (v19), Vite, Lucide-React, Custom CSS (Glassmorphism)
+- **Backend:** Node.js, Express
+- **Database:** PostgreSQL (Neon Cloud)
+- **File Handling:** Multer for high-resolution photo uploads
 
-## Expanding the ESLint configuration
+## 🏁 Getting Started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. **Install Dependencies:**
+   ```bash
+   npm install
+   cd backend && npm install
+   ```
+2. **Setup Environment:**
+   Create a `.env` file in the `backend` directory with your database connection strings.
+3. **Run the App:**
+   ```bash
+   # From the root directory
+   npm run dev
+   ```
+
+---
+*Created as a comprehensive travel management solution.*

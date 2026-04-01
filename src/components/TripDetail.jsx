@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Plus, DollarSign, Image as ImageIcon, MapPin, Calendar, Check, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, DollarSign, Image as ImageIcon, MapPin, Calendar, Check, Trash2, Info } from 'lucide-react';
 
 export default function TripDetail({ trip, onBack, onUpdateTrip }) {
   if (!trip) return null;
@@ -102,6 +102,17 @@ export default function TripDetail({ trip, onBack, onUpdateTrip }) {
       {/* Tabs */}
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
         <button 
+          onClick={() => setActiveTab('details')} 
+          className="btn" 
+          style={{ 
+            background: activeTab === 'details' ? 'var(--color-primary-start)' : 'transparent', 
+            color: activeTab === 'details' ? 'white' : 'var(--text-main)',
+            boxShadow: activeTab === 'details' ? '0 4px 15px rgba(99, 102, 241, 0.4)' : 'none'
+          }}
+        >
+          <Info size={18} /> Details
+        </button>
+        <button 
           onClick={() => setActiveTab('expenses')} 
           className="btn" 
           style={{ 
@@ -124,6 +135,64 @@ export default function TripDetail({ trip, onBack, onUpdateTrip }) {
           <ImageIcon size={18} /> Photos
         </button>
       </div>
+
+      {/* Details Tab */}
+      {activeTab === 'details' && (
+        <div className="glass-panel animate-fade-in" style={{ padding: '2rem' }}>
+          <h3>Extended Trip Details</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem', marginTop: '1.5rem' }}>
+            <div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Trip Number</p>
+              <p style={{ fontWeight: 500 }}>{trip.tripNumber || 'N/A'}</p>
+            </div>
+            <div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Mode used</p>
+              <p style={{ fontWeight: 500 }}>{trip.mode || 'N/A'}</p>
+            </div>
+            <div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Travel Distance</p>
+              <p style={{ fontWeight: 500 }}>{trip.distance ? `${trip.distance} km/miles` : 'N/A'}</p>
+            </div>
+            <div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Trip purpose</p>
+              <p style={{ fontWeight: 500 }}>{trip.purpose || 'N/A'}</p>
+            </div>
+            <div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Number of Companions</p>
+              <p style={{ fontWeight: 500 }}>{trip.companions || 0}</p>
+            </div>
+            <div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Frequency</p>
+              <p style={{ fontWeight: 500 }}>{trip.frequency || 'N/A'}</p>
+            </div>
+            <div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Cost Incurred</p>
+              <p style={{ fontWeight: 500 }}>{trip.cost ? `₹${trip.cost}` : 'N/A'}</p>
+            </div>
+            <div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Start Time</p>
+              <p style={{ fontWeight: 500 }}>{trip.startTime || 'N/A'}</p>
+            </div>
+            <div>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>End Time</p>
+              <p style={{ fontWeight: 500 }}>{trip.endTime || 'N/A'}</p>
+            </div>
+            <div style={{ gridColumn: '1 / -1', marginTop: '1rem', borderTop: '1px solid var(--color-glass-border)', paddingTop: '1rem' }}>
+              <h4 style={{ marginBottom: '1rem' }}>Coordinates</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Origin</p>
+                  <p style={{ fontWeight: 500 }}>Lat: {trip.originLat || 'N/A'}, Lng: {trip.originLng || 'N/A'}</p>
+                </div>
+                <div>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Destination</p>
+                  <p style={{ fontWeight: 500 }}>Lat: {trip.destLat || 'N/A'}, Lng: {trip.destLng || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Expenses Tab */}
       {activeTab === 'expenses' && (

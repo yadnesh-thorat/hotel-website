@@ -53,9 +53,36 @@ pool.connect((err, client, release) => {
           name TEXT,
           destination TEXT,
           "startDate" TEXT,
-          description TEXT
+          description TEXT,
+          "tripNumber" TEXT,
+          "originLat" REAL,
+          "originLng" REAL,
+          "startTime" TEXT,
+          "destLat" REAL,
+          "destLng" REAL,
+          "endTime" TEXT,
+          "mode" TEXT,
+          "distance" REAL,
+          "purpose" TEXT,
+          "companions" INTEGER,
+          "frequency" TEXT,
+          "cost" REAL
         );
       `);
+
+      // Attempt to add columns if table already exists
+      const columnsToAdd = [
+        `"tripNumber" TEXT`, `"originLat" REAL`, `"originLng" REAL`, `"startTime" TEXT`,
+        `"destLat" REAL`, `"destLng" REAL`, `"endTime" TEXT`, `"mode" TEXT`,
+        `"distance" REAL`, `"purpose" TEXT`, `"companions" INTEGER`, `"frequency" TEXT`, `"cost" REAL`
+      ];
+      for (let col of columnsToAdd) {
+        try {
+          await client.query(`ALTER TABLE trips ADD COLUMN ${col};`);
+        } catch (e) {
+          // Ignore, column likely already exists
+        }
+      }
 
       await client.query(`
         CREATE TABLE IF NOT EXISTS expenses (
@@ -108,7 +135,7 @@ app.post('/api/login', async (req, res) => {
 app.get('/api/trips/:username', async (req, res) => {
   const { username } = req.params;
   try {
-    const tripResult = await pool.query(`SELECT id, username, name, destination, "startDate" as "startDate", description FROM trips WHERE username = $1`, [username]);
+    const tripResult = await pool.query(`SELECT * FROM trips WHERE username = $1`, [username]);
     const trips = tripResult.rows;
     console.log(`Fetched ${trips.length} trips for user: ${username}`);
     
@@ -129,12 +156,25 @@ app.get('/api/trips/:username', async (req, res) => {
 
 // Create a new trip
 app.post('/api/trips', async (req, res) => {
-  const { id, username, name, destination, startDate, description } = req.body;
+  const { 
+    id, username, name, destination, startDate, description,
+    tripNumber, originLat, originLng, startTime, destLat, destLng,
+    endTime, mode, distance, purpose, companions, frequency, cost
+  } = req.body;
   try {
     console.log(`Creating trip: ${name} (ID: ${id}) for user: ${username}`);
     await pool.query(
-      `INSERT INTO trips (id, username, name, destination, "startDate", description) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [id, username, name, destination, startDate, description]
+      `INSERT INTO trips (
+        id, username, name, destination, "startDate", description,
+        "tripNumber", "originLat", "originLng", "startTime",
+        "destLat", "destLng", "endTime", "mode", "distance",
+        "purpose", "companions", "frequency", "cost"
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
+      [
+        id, username, name, destination, startDate, description,
+        tripNumber, originLat, originLng, startTime, destLat, destLng,
+        endTime, mode, distance, purpose, companions, frequency, cost
+      ]
     );
     res.json({ message: 'Trip created successfully' });
   } catch (error) {
@@ -145,7 +185,11 @@ app.post('/api/trips', async (req, res) => {
 // Full update of a trip (easiest way to handle the current structure from frontend)
 app.put('/api/trips/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, destination, startDate, description, expenses, photos } = req.body;
+  const { 
+    name, destination, startDate, description, expenses, photos,
+    tripNumber, originLat, originLng, startTime, destLat, destLng,
+    endTime, mode, distance, purpose, companions, frequency, cost
+  } = req.body;
   
   // Use a transaction since we do multiple queries
   const client = await pool.connect();
@@ -154,8 +198,19 @@ app.put('/api/trips/:id', async (req, res) => {
     
     // Update trip details
     await client.query(
-      `UPDATE trips SET name = $1, destination = $2, "startDate" = $3, description = $4 WHERE id = $5`,
-      [name, destination, startDate, description, id]
+      `UPDATE trips SET 
+        name = $1, destination = $2, "startDate" = $3, description = $4,
+        "tripNumber" = $5, "originLat" = $6, "originLng" = $7, "startTime" = $8,
+        "destLat" = $9, "destLng" = $10, "endTime" = $11, "mode" = $12, "distance" = $13,
+        "purpose" = $14, "companions" = $15, "frequency" = $16, "cost" = $17
+       WHERE id = $18`,
+      [
+        name, destination, startDate, description,
+        tripNumber, originLat, originLng, startTime,
+        destLat, destLng, endTime, mode, distance,
+        purpose, companions, frequency, cost,
+        id
+      ]
     );
 
     // Replace expenses
