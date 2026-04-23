@@ -57,20 +57,15 @@ export default function Auth({ onLogin }) {
             </div>
           </div>
           
-          <button type="submit" className="btn btn-primary w-full" style={{ marginTop: '1rem' }}>
-            {isLogin ? <><LogIn size={18} /> Log In</> : <><UserPlus size={18} /> Sign Up</>}
-          </button>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+            <button type="submit" className="btn btn-primary w-full">
+              <LogIn size={18} /> Log In
+            </button>
+            <button type="button" className="btn btn-secondary w-full" onClick={handleSubmit}>
+              <UserPlus size={18} /> Register
+            </button>
+          </div>
         </form>
-
-        <p style={{ marginTop: '2rem', fontSize: '0.9rem' }}>
-          {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <span 
-            onClick={() => setIsLogin(!isLogin)} 
-            style={{ color: 'var(--color-primary-start)', fontWeight: '600', cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            {isLogin ? 'Sign up' : 'Log in'}
-          </span>
-        </p>
       </div>
     </div>
   );

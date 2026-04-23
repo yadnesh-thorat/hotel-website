@@ -5,6 +5,7 @@ import './index.css';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 import TripDetail from './components/TripDetail';
+import Chatbot from './components/Chatbot';
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -12,7 +13,7 @@ function App() {
   const [currentView, setCurrentView] = useState('dashboard'); // 'dashboard', 'auth', 'trip'
   const [activeTripId, setActiveTripId] = useState(null);
 
-  const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
+  const API_URL = import.meta.env.VITE_API_URL || '/api';
 
   useEffect(() => {
     const user = localStorage.getItem('tripLogUser');
@@ -77,7 +78,13 @@ function App() {
 
   const handleAddTrip = async (newTrip) => {
     try {
-      const payload = { ...newTrip, username: currentUser };
+      const payload = { 
+        ...newTrip, 
+        username: currentUser,
+        bookings: newTrip.bookings || [],
+        expenses: newTrip.expenses || [],
+        photos: newTrip.photos || []
+      };
       await fetch(`${API_URL}/trips`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,17 +101,13 @@ function App() {
     if (!updatedTrip || !updatedTrip.id) return;
     
     // Optimistic UI update: instantly update the trip locally
-    setTrips(currentTrips => {
-      const newList = (currentTrips || []).map(t => t.id === updatedTrip.id ? updatedTrip : t);
-      // If we are currently viewing this trip, make sure it stays active by having latest data
-      return newList;
-    });
+    // Update local list first
+    const updatedTripsList = (trips || []).map(t => t.id === updatedTrip.id ? updatedTrip : t);
+    setTrips(updatedTripsList);
 
     try {
-      // Save locally first for maximum resilience
-      localStorage.setItem(`trips_${currentUser}`, JSON.stringify(
-        trips.map(t => t.id === updatedTrip.id ? updatedTrip : t)
-      ));
+      // Save to localStorage immediately
+      localStorage.setItem(`trips_${currentUser}`, JSON.stringify(updatedTripsList));
 
       const response = await fetch(`${API_URL}/trips/${updatedTrip.id}`, {
         method: 'PUT',
@@ -112,10 +115,12 @@ function App() {
         body: JSON.stringify({
           ...updatedTrip,
           expenses: updatedTrip.expenses || [],
-          photos: updatedTrip.photos || []
+          photos: updatedTrip.photos || [],
+          bookings: updatedTrip.bookings || []
         })
       });
       
+      if (!response.ok) throw new Error('Server update failed');
       await fetchTrips(currentUser);
     } catch (e) {
       console.error('Save to server failed, data is safe in localStorage', e);
@@ -130,6 +135,64 @@ function App() {
   const getActiveTrip = () => {
     if (!activeTripId || !trips) return null;
     return trips.find(t => String(t.id) === String(activeTripId)) || null;
+  };
+
+  const handleChatbotAction = async (actionData) => {
+    if (actionData.action === 'book_hotel') {
+      const tripToUpdate = getActiveTrip() || (trips && trips.length > 0 ? trips[trips.length - 1] : null);
+      
+      if (tripToUpdate) {
+        try {
+          console.log('Directly booking for trip:', tripToUpdate.id);
+          const response = await fetch(`${API_URL}/bookings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tripId: tripToUpdate.id,
+              hotelName: actionData.hotel,
+              price: actionData.price,
+              checkIn: actionData.checkIn,
+              checkOut: actionData.checkOut
+            })
+          });
+          
+          if (!response.ok) throw new Error('Booking failed');
+          
+          const bookingResult = await response.json();
+          const newBooking = {
+            id: bookingResult.bookingId || Date.now().toString(),
+            hotelName: actionData.hotel,
+            price: actionData.price,
+            checkIn: actionData.checkIn,
+            checkOut: actionData.checkOut,
+            bookingRef: bookingResult.bookingRef || ('TL' + Math.floor(100000 + Math.random() * 900000))
+          };
+
+          // Optimistic state update
+          const updatedTrips = trips.map(t => {
+            if (t.id === tripToUpdate.id) {
+              return {
+                ...t,
+                bookings: [...(t.bookings || []), newBooking]
+              };
+            }
+            return t;
+          });
+          
+          setTrips(updatedTrips);
+          localStorage.setItem(`trips_${currentUser}`, JSON.stringify(updatedTrips));
+          
+          // Still refetch to be absolutely sure we are in sync with server
+          await fetchTrips(currentUser);
+          
+          setActiveTripId(tripToUpdate.id);
+          setCurrentView('trip');
+        } catch (e) {
+          console.error('Direct booking failed', e);
+          throw e;
+        }
+      }
+    }
   };
 
   return (
@@ -170,6 +233,8 @@ function App() {
           </>
         )}
       </main>
+
+      {currentUser && <Chatbot currentUser={currentUser} onAction={handleChatbotAction} />}
     </div>
   );
 }
