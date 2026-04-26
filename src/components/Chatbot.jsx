@@ -12,7 +12,7 @@ const Chatbot = ({ currentUser, onAction }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [showBubble, setShowBubble] = useState(false);
   const messagesEndRef = useRef(null);
-  
+
   useEffect(() => {
     // Show welcome bubble after 3 seconds on first visit
     const timer = setTimeout(() => {
@@ -20,14 +20,14 @@ const Chatbot = ({ currentUser, onAction }) => {
     }, 3000);
     return () => clearTimeout(timer);
   }, [isOpen]);
-  
+
   const suggestions = [
-    { icon: <Navigation size={14} />, text: "Plan a 3-day trip to Paris" },
-    { icon: <Hotel size={14} />, text: "Find budget hotels in Tokyo" },
-    { icon: <Compass size={14} />, text: "Best times to visit Bali?" }
+    { icon: <Navigation size={14} />, text: "Plan a 3-day trip to any location" },
+    { icon: <Hotel size={14} />, text: "Find budget hotels in India" },
+    { icon: <Compass size={14} />, text: "Best times to visit Pune?" }
   ];
 
-  const API_URL = import.meta.env.VITE_API_URL || '/api';
+  const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:3001/api');
 
   useEffect(() => {
     if (isOpen) {
@@ -38,8 +38,8 @@ const Chatbot = ({ currentUser, onAction }) => {
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    const userMessage = { 
-      role: 'user', 
+    const userMessage = {
+      role: 'user',
       content: input,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -51,42 +51,39 @@ const Chatbot = ({ currentUser, onAction }) => {
       const response = await fetch(`${API_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           message: userMessage.content,
-          history: messages 
+          history: messages
         })
       });
 
       const data = await response.json();
-      
+
       if (data.reply) {
         let replyText = data.reply;
         let action = null;
-        
-        // Check for JSON actions in the reply (handles multi-line and code blocks)
-        const jsonRegex = /```json\s*([\s\S]*?)```|(\{[\s\S]*?"action":\s*"book_hotel"[\s\S]*?\})/;
-        const jsonMatch = replyText.match(jsonRegex);
-        
+
+        // Check for any JSON actions in the reply
+        const jsonMatch = replyText.match(/\{"action":\s*".*?".*?\}/);
         if (jsonMatch) {
           try {
-            const rawJson = jsonMatch[1] || jsonMatch[2];
-            action = JSON.parse(rawJson.trim());
-            // Clean up the text to not show the raw JSON or the code blocks to the user
-            replyText = replyText.replace(jsonMatch[0], "").trim();
+            action = JSON.parse(jsonMatch[0]);
+            // Clean up the text to not show the raw JSON to the user
+            replyText = replyText.replace(jsonMatch[0], "");
           } catch (e) {
             console.error('Failed to parse action JSON', e);
           }
         }
 
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
-          content: replyText, 
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: replyText,
           action: action,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }]);
       } else {
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
+        setMessages(prev => [...prev, {
+          role: 'assistant',
           content: 'Oh no, I hit a little snag! 😅 Could you check if the API key is set up in the backend?',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }]);
@@ -115,9 +112,9 @@ const Chatbot = ({ currentUser, onAction }) => {
 
   const handleSendDirect = async (text) => {
     if (!text.trim()) return;
-    
-    const userMessage = { 
-      role: 'user', 
+
+    const userMessage = {
+      role: 'user',
       content: text,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -129,49 +126,46 @@ const Chatbot = ({ currentUser, onAction }) => {
       const response = await fetch(`${API_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           message: userMessage.content,
-          history: messages 
+          history: messages
         })
       });
 
       const data = await response.json();
-      
+
       if (data.reply) {
         let replyText = data.reply;
         let action = null;
-        
-        // Check for JSON actions (handles multi-line and code blocks)
-        const jsonRegex = /```json\s*([\s\S]*?)```|(\{[\s\S]*?"action":\s*"book_hotel"[\s\S]*?\})/;
-        const jsonMatch = replyText.match(jsonRegex);
-        
+
+        // Check for any JSON actions
+        const jsonMatch = replyText.match(/\{"action":\s*".*?".*?\}/);
         if (jsonMatch) {
           try {
-            const rawJson = jsonMatch[1] || jsonMatch[2];
-            action = JSON.parse(rawJson.trim());
-            replyText = replyText.replace(jsonMatch[0], "").trim();
+            action = JSON.parse(jsonMatch[0]);
+            replyText = replyText.replace(jsonMatch[0], "");
           } catch (e) {
             console.error('Failed to parse action JSON', e);
           }
         }
 
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
-          content: replyText, 
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: replyText,
           action: action,
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }]);
       } else {
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
+        setMessages(prev => [...prev, {
+          role: 'assistant',
           content: 'Oops! I lost my connection for a second. 📡 Could you check your internet or the server?',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }]);
       }
     } catch (error) {
       console.error('Chat error:', error);
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
+      setMessages(prev => [...prev, {
+        role: 'assistant',
         content: 'I could not connect to the server. 🔌 Please check if the backend is running!',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }]);
@@ -180,30 +174,32 @@ const Chatbot = ({ currentUser, onAction }) => {
     }
   };
 
-  const handleBookingClick = async (action, idx, msg) => {
+  const handleActionClick = async (action, idx, msg) => {
     try {
-      // Find the trip to book for
-      // We'll pass a signal back to App.jsx to handle the actual API call
       if (onAction) {
         await onAction(action);
-        
+
         // Update local message to show success
         setMessages(prev => {
           const newMsgs = [...prev];
-          newMsgs[idx] = { ...msg, action: null, content: msg.content + "\n\n✅ **Confirmed! This hotel is now in your trip.**" };
+          let successText = "\n\n✅ **Confirmed!**";
+          if (action.action === 'book_hotel') successText = "\n\n✅ **Hotel booked and added to your trip!**";
+          if (action.action === 'create_trip') successText = "\n\n✅ **Trip plan created! You can see it on your dashboard.**";
+          
+          newMsgs[idx] = { ...msg, action: null, content: msg.content + successText };
           return newMsgs;
         });
       }
     } catch (e) {
-      console.error('Booking failed', e);
-      alert('Sorry, I could not save that booking. Please try again.');
+      console.error('Action failed', e);
+      alert('Sorry, I could not complete that action. Please try again.');
     }
   };
 
   return (
     <>
       {/* Floating Chat Button */}
-      <button 
+      <button
         className="chatbot-toggle"
         onClick={() => {
           setIsOpen(!isOpen);
@@ -228,10 +224,10 @@ const Chatbot = ({ currentUser, onAction }) => {
         }}
       >
         {isOpen ? <X size={28} /> : <MessageSquare size={28} />}
-        
+
         {/* Notification Bubble */}
         {showBubble && !isOpen && (
-          <div 
+          <div
             style={{
               position: 'absolute',
               right: '70px',
@@ -261,7 +257,7 @@ const Chatbot = ({ currentUser, onAction }) => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div 
+        <div
           className="chatbot-window"
           style={{
             position: 'fixed',
@@ -298,8 +294,8 @@ const Chatbot = ({ currentUser, onAction }) => {
               <span>TripLog AI Assistant</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <button 
-                onClick={() => setIsExpanded(!isExpanded)} 
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
                 style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', display: 'flex', padding: '4px' }}
                 title={isExpanded ? "Minimize" : "Expand"}
               >
@@ -322,9 +318,9 @@ const Chatbot = ({ currentUser, onAction }) => {
             backgroundColor: '#f8fafc'
           }}>
             {messages.map((msg, idx) => (
-              <div key={idx} style={{ 
-                display: 'flex', 
-                flexDirection: 'row', 
+              <div key={idx} style={{
+                display: 'flex',
+                flexDirection: 'row',
                 alignSelf: msg.role === 'user' ? 'flex-end' : 'flex-start',
                 gap: '10px',
                 maxWidth: '90%',
@@ -347,9 +343,9 @@ const Chatbot = ({ currentUser, onAction }) => {
                     <Sparkles size={16} />
                   </div>
                 )}
-                
+
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                  <div 
+                  <div
                     style={{
                       backgroundColor: msg.role === 'user' ? 'var(--color-primary-start, #4f46e5)' : 'white',
                       color: msg.role === 'user' ? 'white' : '#1e293b',
@@ -363,30 +359,57 @@ const Chatbot = ({ currentUser, onAction }) => {
                     }}
                     dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br/>') }}
                   />
-                  
+
                   <span style={{ fontSize: '0.7rem', color: '#94a3b8', margin: '0 4px' }}>{msg.time}</span>
 
-                  {msg.action && msg.action.action === 'book_hotel' && (
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                      <button 
-                        onClick={() => handleBookingClick(msg.action, idx, msg)}
-                        style={{ padding: '8px 14px', background: 'var(--color-success, #10b981)', color: 'white', border: 'none', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)' }}
-                      >
-                        <Hotel size={14} /> Yes, book it
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setMessages(prev => {
-                            const newMsgs = [...prev];
-                            newMsgs[idx] = { ...msg, action: null };
-                            return newMsgs;
-                          });
-                          handleSendDirect("No, show me another option.");
-                        }}
-                        style={{ padding: '8px 14px', background: 'white', color: 'var(--text-main)', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
-                      >
-                        No, show another
-                      </button>
+                  {msg.action && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                      {msg.action.action === 'book_hotel' && (
+                        <>
+                          <button
+                            onClick={() => handleActionClick(msg.action, idx, msg)}
+                            style={{ padding: '8px 14px', background: 'var(--color-success, #10b981)', color: 'white', border: 'none', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 6px rgba(16, 185, 129, 0.3)' }}
+                          >
+                            <Hotel size={14} /> Yes, book it
+                          </button>
+                          <button
+                            onClick={() => {
+                              setMessages(prev => {
+                                const newMsgs = [...prev];
+                                newMsgs[idx] = { ...msg, action: null };
+                                return newMsgs;
+                              });
+                              handleSendDirect("No, show me another option.");
+                            }}
+                            style={{ padding: '8px 14px', background: 'white', color: 'var(--text-main)', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
+                          >
+                            No, show another
+                          </button>
+                        </>
+                      )}
+                      {msg.action.action === 'create_trip' && (
+                        <>
+                          <button
+                            onClick={() => handleActionClick(msg.action, idx, msg)}
+                            style={{ padding: '8px 14px', background: 'var(--color-primary-start, #4f46e5)', color: 'white', border: 'none', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', boxShadow: '0 2px 6px rgba(79, 70, 229, 0.3)' }}
+                          >
+                            <Compass size={14} /> Create Trip Plan
+                          </button>
+                          <button
+                            onClick={() => {
+                              setMessages(prev => {
+                                const newMsgs = [...prev];
+                                newMsgs[idx] = { ...msg, action: null };
+                                return newMsgs;
+                              });
+                              handleSendDirect("I'll plan it myself, thanks.");
+                            }}
+                            style={{ padding: '8px 14px', background: 'white', color: 'var(--text-main)', border: '1px solid #cbd5e1', borderRadius: '10px', fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}
+                          >
+                            No, thanks
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -458,8 +481,8 @@ const Chatbot = ({ currentUser, onAction }) => {
             display: 'flex',
             gap: '10px',
           }}>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
@@ -477,7 +500,7 @@ const Chatbot = ({ currentUser, onAction }) => {
               onFocus={(e) => e.target.style.borderColor = 'var(--color-primary-start, #4f46e5)'}
               onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
             />
-            <button 
+            <button
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
               style={{

@@ -192,6 +192,78 @@ function App() {
           throw e;
         }
       }
+    } else if (actionData.action === 'create_trip') {
+      try {
+        const newTripId = Date.now().toString();
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Create trip payload
+        const newTrip = {
+          id: newTripId,
+          name: actionData.name || `Trip to ${actionData.destination}`,
+          destination: actionData.destination,
+          startDate: today,
+          description: `AI planned trip to ${actionData.destination}. Estimated budget: ${actionData.budget} INR.`,
+          cost: actionData.budget,
+          username: currentUser,
+          bookings: [],
+          expenses: [],
+          photos: []
+        };
+
+        // If a hotel was suggested, add it as a booking
+        if (actionData.hotel) {
+          const checkOutDate = new Date();
+          checkOutDate.setDate(checkOutDate.getDate() + (actionData.days || 3));
+          
+          newTrip.bookings.push({
+            id: (Date.now() + 1).toString(),
+            hotelName: actionData.hotel,
+            price: actionData.budget / (actionData.days || 3) * 0.6, // estimated
+            checkIn: today,
+            checkOut: checkOutDate.toISOString().split('T')[0],
+            bookingRef: 'TL' + Math.floor(100000 + Math.random() * 900000)
+          });
+        }
+
+        // Save trip to backend
+        await fetch(`${API_URL}/trips`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newTrip)
+        });
+
+        // If there are bookings, save them too (the backend /api/trips doesn't handle bookings array in POST)
+        if (newTrip.bookings.length > 0) {
+          for (const booking of newTrip.bookings) {
+            await fetch(`${API_URL}/bookings`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                tripId: newTripId,
+                hotelName: booking.hotelName,
+                price: booking.price,
+                checkIn: booking.checkIn,
+                checkOut: booking.checkOut
+              })
+            });
+          }
+        }
+
+        // Update local state
+        setTrips([...trips, newTrip]);
+        localStorage.setItem(`trips_${currentUser}`, JSON.stringify([...trips, newTrip]));
+        
+        // Navigate to the new trip
+        setActiveTripId(newTripId);
+        setCurrentView('trip');
+        
+        // Refresh to get full data from server
+        await fetchTrips(currentUser);
+      } catch (e) {
+        console.error('Failed to create trip from chatbot', e);
+        throw e;
+      }
     }
   };
 

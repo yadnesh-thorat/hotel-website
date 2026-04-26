@@ -370,34 +370,79 @@ app.put('/api/trips/:id', async (req, res) => {
 // Chatbot API Endpoint
 app.post('/api/chat', async (req, res) => {
   const { message, history } = req.body;
+
   try {
     const systemInstruction = `You are 'TripBuddy', a friendly and direct travel companion.
+Your personality:
 - You are warm, helpful, and very concise. 🌟
-- When a user asks for a hotel, find ONE best option and ask: "Would you like to book [Hotel Name] for [Price]?"
-- You MUST provide the JSON block for that hotel. This JSON is for the SYSTEM only. 
-- IMPORTANT: Do NOT show the JSON to the user and do NOT add any labels like "Booking details:" or "JSON:" for it. Just put the JSON block at the end of your message.
-- The JSON block MUST be: {"action": "book_hotel", "hotel": "Hotel Name", "price": 123, "checkIn": "YYYY-MM-DD", "checkOut": "YYYY-MM-DD"}
-- Keep responses short and focused on the booking decision. Use emojis ✈️🏨.`;
+- When a user wants to plan a trip or mentions a destination, propose a trip name, the best hotel, and a total budget.
+- Ask: "Would you like me to create this trip plan for you?"
+- You MUST provide the JSON block for the trip. This JSON is for the SYSTEM only. 
+- IMPORTANT: Do NOT show the JSON to the user. Put it at the end of your message.
+- The JSON block for creating a trip MUST be: {"action": "create_trip", "destination": "City Name", "hotel": "Hotel Name", "budget": 50000, "name": "Adventure in [City]", "days": 3}
+- If the user specifically wants to book a hotel for an EXISTING trip, use: {"action": "book_hotel", "hotel": "Hotel Name", "price": 5000, "checkIn": "YYYY-MM-DD", "checkOut": "YYYY-MM-DD"}
+- Keep responses short. Use emojis ✈️🏨.`;
 
     let text = "";
+
     try {
-      const messages = [{ role: "system", content: systemInstruction }, ...history.map(h => ({ role: h.role === 'assistant' ? 'assistant' : 'user', content: h.content })), { role: "user", content: message }];
-      const chatCompletion = await groq.chat.completions.create({ messages, model: "llama-3.1-8b-instant", max_tokens: 1000 });
+      // 1. Try Groq First
+      const messages = [
+        { role: "system", content: systemInstruction },
+        ...history.map(h => ({
+          role: h.role === 'assistant' ? 'assistant' : 'user',
+          content: h.content
+        })),
+        { role: "user", content: message }
+      ];
+
+      const chatCompletion = await groq.chat.completions.create({
+        messages,
+        model: "llama-3.1-8b-instant",
+        max_tokens: 1000,
+      });
+
       text = chatCompletion.choices[0]?.message?.content || "";
     } catch (groqError) {
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash", systemInstruction: { role: "system", parts: [{ text: systemInstruction }] } });
+      console.warn('Groq API failed, falling back to Gemini:', groqError.message);
+
+      // 2. Try Gemini Fallback
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.0-flash",
+        systemInstruction: {
+          role: "system",
+          parts: [{ text: systemInstruction }]
+        },
+        generationConfig: {
+          maxOutputTokens: 1000,
+        }
+      });
+
       const cleanHistory = history.filter((h, i) => !(i === 0 && h.role === 'assistant'));
-      const chat = model.startChat({ history: cleanHistory.map(h => ({ role: h.role === 'assistant' ? 'model' : 'user', parts: [{ text: h.content }] })) });
+      const chat = model.startChat({
+        history: cleanHistory.map(h => ({
+          role: h.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: h.content }]
+        }))
+      });
+
       const result = await chat.sendMessage(message);
       const response = await result.response;
       text = response.text();
     }
+
     res.json({ reply: text });
   } catch (error) {
-    if (error.message.includes('429') || error.message.includes('404') || error.message.includes('quota')) {
-      return res.json({ reply: `**[Demo Mode Active]**\n\nI received your message: *"${message}"*\n\nHowever, AI APIs are currently unavailable.\n\n{"action": "book_hotel", "hotel": "Grand Plaza Hotel (Demo)", "price": 4500, "checkIn": "2024-06-15", "checkOut": "2024-06-18"}` });
+    console.error('Chat API Error:', error.message);
+
+    // Provide a graceful fallback if both APIs fail
+    if (error.message.includes('429') || error.message.includes('404') || error.message.includes('quota') || error.message.includes('models/')) {
+      return res.json({
+        reply: `**[Demo Mode Active]**\n\nI received your message: *"${message}"*\n\nHowever, both Groq and Gemini API Keys have failed (likely due to quota limits).\n\nSince I can't connect to the AI right now, I'm responding in offline Demo Mode! \n\nI've created a trip plan for Paris with a budget of 1,50,000 INR. Would you like me to create this trip plan for you?\n\n{"action": "create_trip", "destination": "Paris", "hotel": "The Ritz Paris", "budget": 150000, "name": "Dream Trip to Paris", "days": 5}`
+      });
     }
-    res.status(500).json({ error: 'Failed to communicate with AI' });
+
+    res.status(500).json({ error: 'Failed to communicate with AI', details: error.message });
   }
 });
 
@@ -573,83 +618,6 @@ app.put('/api/trips/:id', async (req, res) => {
   }
 });
 
-// Chatbot API Endpoint
-app.post('/api/chat', async (req, res) => {
-  const { message, history } = req.body;
-
-  try {
-    const systemInstruction = `You are 'TripBuddy', a friendly and direct travel companion.
-Your personality:
-- You are warm, helpful, and very concise. 🌟
-- When a user asks for a hotel, find ONE best option and ask: "Would you like to book [Hotel Name] for [Price]?"
-- You MUST provide the JSON block for that hotel. This JSON is for the SYSTEM only. 
-- IMPORTANT: Do NOT show the JSON to the user and do NOT add any labels like "Booking details:" or "JSON:" for it. Just put the JSON block at the end of your message.
-- Do not list 1, 2, 3 options unless specifically asked. Be direct.
-- The JSON block MUST be: {"action": "book_hotel", "hotel": "Hotel Name", "price": 123, "checkIn": "YYYY-MM-DD", "checkOut": "YYYY-MM-DD"}
-- Keep responses short and focused on the booking decision. Use emojis ✈️🏨.`;
-
-    let text = "";
-
-    try {
-      // 1. Try Groq First
-      const messages = [
-        { role: "system", content: systemInstruction },
-        ...history.map(h => ({
-          role: h.role === 'assistant' ? 'assistant' : 'user',
-          content: h.content
-        })),
-        { role: "user", content: message }
-      ];
-
-      const chatCompletion = await groq.chat.completions.create({
-        messages,
-        model: "llama-3.1-8b-instant",
-        max_tokens: 1000,
-      });
-
-      text = chatCompletion.choices[0]?.message?.content || "";
-    } catch (groqError) {
-      console.warn('Groq API failed, falling back to Gemini:', groqError.message);
-
-      // 2. Try Gemini Fallback
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash",
-        systemInstruction: {
-          role: "system",
-          parts: [{ text: systemInstruction }]
-        },
-        generationConfig: {
-          maxOutputTokens: 1000,
-        }
-      });
-
-      const cleanHistory = history.filter((h, i) => !(i === 0 && h.role === 'assistant'));
-      const chat = model.startChat({
-        history: cleanHistory.map(h => ({
-          role: h.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: h.content }]
-        }))
-      });
-
-      const result = await chat.sendMessage(message);
-      const response = await result.response;
-      text = response.text();
-    }
-
-    res.json({ reply: text });
-  } catch (error) {
-    console.error('Chat API Error:', error.message);
-
-    // Provide a graceful fallback if both APIs fail
-    if (error.message.includes('429') || error.message.includes('404') || error.message.includes('quota') || error.message.includes('models/')) {
-      return res.json({
-        reply: `**[Demo Mode Active]**\n\nI received your message: *"${message}"*\n\nHowever, both Groq and Gemini API Keys have failed (likely due to quota limits).\n\nSince I can't connect to the AI right now, I'm responding in offline Demo Mode! \n\nWould you like to book this sample hotel?\n\n{"action": "book_hotel", "hotel": "Grand Plaza Hotel (Demo)", "price": 4500, "checkIn": "2024-06-15", "checkOut": "2024-06-18"}`
-      });
-    }
-
-    res.status(500).json({ error: 'Failed to communicate with AI', details: error.message });
-  }
-});
 
 app.get('/api/hotels', async (req, res) => {
   const city = req.query.city;
