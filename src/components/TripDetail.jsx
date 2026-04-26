@@ -192,7 +192,7 @@ export default function TripDetail({ trip, onBack, onUpdateTrip }) {
       </div>
 
       {/* Tabs */}
-      <div className="tab-group" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '1px solid var(--color-glass-border)', paddingBottom: '1rem' }}>
+      <div className="tab-group">
         <button 
           onClick={() => setActiveTab('details')} 
           className="btn" 

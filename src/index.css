@@ -454,3 +454,74 @@ p { margin-bottom: 1em; color: var(--text-muted); }
     padding: 1.25rem !important;
   }
 }
+
+/* Responsive Tab Group */
+.tab-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--color-glass-border);
+  padding-bottom: 1rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tab-group::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-group .btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .tab-group {
+    gap: 0.25rem;
+  }
+  
+  .tab-group .btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Chatbot Mobile Adjustments */
+@media (max-width: 500px) {
+  .chatbot-window {
+    width: calc(100% - 20px) !important;
+    right: 10px !important;
+    left: 10px !important;
+    bottom: 80px !important;
+    height: 70vh !important;
+    max-height: 500px !important;
+  }
+  
+  .chatbot-toggle {
+    width: 50px !important;
+    height: 50px !important;
+    bottom: 15px !important;
+    right: 15px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 0.75rem 1rem !important;
+  }
+  .nav-brand {
+    font-size: 1.1rem !important;
+  }
+  .nav-actions {
+    gap: 0.5rem !important;
+  }
+  .nav-actions .btn {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.8rem !important;
+  }
+  .user-greeting {
+    display: none !important;
+  }
+}
